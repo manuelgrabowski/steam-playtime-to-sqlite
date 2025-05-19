@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=67", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "steam-playtime-to-sqlite"
+version = "0.1.0"
+description = "Track and analyze Steam playtime statistics"
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.13"
+license = "GPL-3.0-only"
+authors = [
+    {name = "Manuel Grabowski", email = "steam@manuelgrabowski.de"}
+]
+classifiers = [
+    "Environment :: Console",
+    "Topic :: Games/Entertainment",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "requests>=2.25.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff == 0.4.4",
+    "mypy == 1.15.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/manuelgrabowski/steam-playtime-to-sqlite"
+"Bug Tracker" = "https://github.com/manuelgrabowski/steam-playtime-to-sqlite/issues"
+
+[project.scripts]
+steam-playtime-to-sqlite = "steam_playtime:main"
+
+[tool.ruff]
+line-length = 100
+indent-width = 4
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.ruff.lint]
+select = [
+    "F",   # pyflakes
+    "E",   # pycodestyle
+    "I",   # isort
+    "ANN", # flake8 type annotations
+    "RUF", # ruff-specific rules
+]
+fixable = ["ALL"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+disallow_untyped_defs = true
+
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true
