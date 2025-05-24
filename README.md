@@ -55,6 +55,17 @@ steam-playtime-to-sqlite update --api-key YOUR_API_KEY --username STEAM_USERNAME
 
 See the [How Steam Playtime Tracking Works](#how-steam-playtime-tracking-works) section below for more details.
 
+#### Steam API Options
+
+Both `init` and `update` also take the following two optional parameters:
+
+- `--include-played-free-games true/false`
+- `--skip-unvetted-apps true/false`
+
+By default, free games are included and unvetted apps are not skipped. Use either
+parameter in case you want to change that behavior. See the [unofficial API docs](https://steamapi.xpaw.me/#IPlayerService/GetOwnedGames)
+for more details.
+
 ### Available Reports
 
 #### Daily Report

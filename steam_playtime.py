@@ -27,6 +27,12 @@ def parse_args() -> argparse.Namespace:
     base_parser.add_argument('--api-key', required=True, help='Steam Web API key')
     base_parser.add_argument('--username', required=True,
         help='Steam vanity username or 64-bit ID')
+    base_parser.add_argument('--include-played-free-games',
+        type=lambda x: x.lower() in ('true', '1', 'yes', 'y'), 
+        default=True, help='Include free games (default: true)')
+    base_parser.add_argument('--skip-unvetted-apps',
+        type=lambda x: x.lower() in ('true', '1', 'yes', 'y'),
+        default=False, help='Skip unvetted apps (default: false)')
 
     init_parser = subparsers.add_parser('init', parents=[base_parser],
         help='Initialize the database and import current data')
@@ -113,7 +119,8 @@ def resolve_vanity_url(api_key: str, username: str) -> int:
         logger.error(f"Failed to parse API response: {e}")
         raise
 
-def fetch_owned_games(api_key: str, steam_id: int) -> list[dict[str, Any]]:
+def fetch_owned_games(api_key: str, steam_id: int, include_played_free_games: bool = True,
+    skip_unvetted_apps: bool = False) -> list[dict[str, Any]]:
     """Fetch the list of owned games for a Steam ID."""
     try:
         logger.info(f"Fetching owned games for Steam ID: {steam_id}")
@@ -122,8 +129,11 @@ def fetch_owned_games(api_key: str, steam_id: int) -> list[dict[str, Any]]:
             'key': api_key,
             'steamid': str(steam_id),
             'include_appinfo': '1',
-            'include_played_free_games': '1',
+            'include_played_free_games': str(int(include_played_free_games)),
+            'skip_unvetted_apps': str(int(skip_unvetted_apps)),
         }
+        logger.debug(f"Params: {params}")
+        
         resp = requests.get(url, params=params, timeout=10)
         resp.raise_for_status()
         
@@ -143,10 +153,11 @@ def fetch_owned_games(api_key: str, steam_id: int) -> list[dict[str, Any]]:
         logger.error(f"Failed to parse API response: {e}")
         raise
 
-def import_data(db_path: str, api_key: str, steam_id: int, date_str: str) -> None:
+def import_data(db_path: str, api_key: str, steam_id: int, date_str: str,
+    include_played_free_games: bool = True, skip_unvetted_apps: bool = False) -> None:
     """Import game data into the database for the specified date."""
     try:
-        games = fetch_owned_games(api_key, steam_id)
+        games = fetch_owned_games(api_key, steam_id, include_played_free_games, skip_unvetted_apps)
         
         conn = sqlite3.connect(db_path)
         conn.row_factory = sqlite3.Row
@@ -471,7 +482,8 @@ def main() -> None:
             
             logger.info(f"Updating playtime data for {update_date}")
             steam_id = resolve_vanity_url(args.api_key, args.username)
-            import_data(db_path, args.api_key, steam_id, update_date)
+            import_data(db_path, args.api_key, steam_id, update_date, 
+                       args.include_played_free_games, args.skip_unvetted_apps)
             logger.info("Update completed successfully")
             
         elif args.command == 'report':
