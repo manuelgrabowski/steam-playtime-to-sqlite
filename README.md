@@ -29,7 +29,7 @@ uvx steam-playtime-to-sqlite
    uv install .
    ```
 
-You can also just copy the `steam.py` file from this repo and use it directly.
+You can also just copy the `steam_playtime.py` file from this repo and use it directly.
 
 ## Usage
 

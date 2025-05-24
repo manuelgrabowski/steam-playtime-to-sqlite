@@ -11,7 +11,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger('steam_tracker')
+logger = logging.getLogger('steam_playtime')
 
 STEAM_API_URL = 'https://api.steampowered.com'
 
