@@ -76,6 +76,8 @@ View playtime sessions for a specific day:
 steam-playtime-to-sqlite report daily --day 2025-04-01
 ```
 
+Defaults to yesterday if no specific `--day` is given.
+
 #### Monthly Report
 
 View playtime summary for a specific month:
@@ -83,6 +85,8 @@ View playtime summary for a specific month:
 ```shell
 steam-playtime-to-sqlite report monthly --month 2025-03
 ```
+
+Defaults to the current month if no specific `--month` is given.
 
 #### Top 10 by Time
 
@@ -105,7 +109,7 @@ steam-playtime-to-sqlite report top-days
 View detailed playtime history for a specific game:
 
 ```shell
-steam-playtime-to-sqlite report per-game --appid 570  # 570 is the AppID for Dota 2
+steam-playtime-to-sqlite report per-game --appid 504230  # 504230 is the AppID for Celeste
 ```
 
 ### Other Options

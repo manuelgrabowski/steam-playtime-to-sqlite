@@ -72,8 +72,10 @@ def parse_args() -> argparse.Namespace:
     report_parser = subparsers.add_parser('report', help='Generate reports')
     report_parser.add_argument('type',
         choices=['daily', 'monthly', 'top-time', 'top-days', 'per-game'], help='Type of report')
-    report_parser.add_argument('--day', type=str, help='Date (YYYY-MM-DD) for daily report')
-    report_parser.add_argument('--month', type=str, help='Month (YYYY-MM) for monthly report')
+    report_parser.add_argument('--day', type=str,
+        help='Date (YYYY-MM-DD) for daily report (defaults to yesterday)')
+    report_parser.add_argument('--month', type=str,
+        help='Month (YYYY-MM) for monthly report (defaults to current month)')
     report_parser.add_argument('--appid', type=int, help='App ID for per-game report')
 
     return parser.parse_args()
@@ -501,6 +503,8 @@ def report_per_game(db_path: str, appid: int) -> None:
 def main() -> None:
     """Main entry point for Steam Playtime to SQLite."""
     try:
+        yesterday = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
+
         args = parse_args()
         db_path = args.db
         
@@ -509,7 +513,7 @@ def main() -> None:
         
         if args.command in ('init', 'update'):
             # By default, use yesterday's date
-            update_date = args.date or (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
+            update_date = args.date or yesterday
             
             if args.command == 'init':
                 logger.info("Initializing database")
@@ -523,16 +527,14 @@ def main() -> None:
             
         elif args.command == 'report':
             if args.type == 'daily':
-                if not args.day:
-                    logger.error("--day YYYY-MM-DD required for daily report")
-                    return
-                report_daily(db_path, args.day)
+                # Default to yesterday if no day specified
+                report_date = args.day or yesterday
+                report_daily(db_path, report_date)
                 
             elif args.type == 'monthly':
-                if not args.month:
-                    logger.error("--month YYYY-MM required for monthly report")
-                    return
-                report_monthly(db_path, args.month)
+                # Default to current month if no month specified
+                report_month = args.month or datetime.today().strftime('%Y-%m')
+                report_monthly(db_path, report_month)
                 
             elif args.type == 'top-time':
                 report_top_time(db_path)
