@@ -464,21 +464,31 @@ def report_per_game(db_path: str, appid: int) -> None:
         print(f"Sessions for {name} (AppID: {appid}):")
         total_played = 0
         days_played = 0
+        session_times = []
         
-        for row in rows:
+        for i, row in enumerate(rows):
             delta = row['daily_minutes']
             if delta > 0:
                 days_played += 1
                 total_played += delta
-                print(f"- {row['date']}: {delta} mins")
+                print(f"- {row['date']}: {format_playtime(delta)}")
+                
+                # Exclude the first session from average calculation
+                if i > 0:
+                    session_times.append(delta)
         
         if days_played == 0:
             print("No play sessions recorded.")
         else:
             print("\nSummary:")
             print(f"Total days played: {days_played}")
-            print(f"Total playtime: {total_played} mins")
-            print(f"Average session: {total_played / days_played:.1f} mins")
+            print(f"Total playtime: {format_playtime(total_played)}")
+            
+            if len(session_times) > 0:
+                avg_session = sum(session_times) / len(session_times)
+                print(f"Average session length: {format_playtime(int(avg_session))}")
+            else:
+                print("Average session length: N/A")
         
         conn.close()
     except sqlite3.Error as e:
