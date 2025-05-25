@@ -15,6 +15,31 @@ logger = logging.getLogger('steam_playtime')
 
 STEAM_API_URL = 'https://api.steampowered.com'
 
+def format_playtime(minutes: int) -> str:
+    """Format playtime minutes into a readable string."""
+    if minutes < 60:
+        return f"{minutes} mins"
+    
+    hours = minutes // 60
+    remaining_minutes = minutes % 60
+    
+    if hours < 24:
+        if remaining_minutes == 0:
+            return f"{hours} hrs"
+        else:
+            return f"{hours} hrs, {remaining_minutes} mins"
+    
+    days = hours // 24
+    remaining_hours = hours % 24
+    
+    parts = [f"{days} days"]
+    if remaining_hours > 0:
+        parts.append(f"{remaining_hours} hrs")
+    if remaining_minutes > 0:
+        parts.append(f"{remaining_minutes} mins")
+    
+    return ", ".join(parts)
+
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description='Steam Playtime Tracker')
@@ -240,7 +265,7 @@ def report_daily(db_path: str, date_str: str) -> None:
             delta = row['playtime_minutes'] - prev
             if delta > 0:
                 played_today = True
-                print(f"- {row['name']}: {delta} mins")
+                print(f"- {row['name']}: {format_playtime(delta)}")
         
         if not played_today:
             print("No games were played on this date.")
@@ -306,7 +331,7 @@ def report_monthly(db_path: str, month_str: str) -> None:
             
         print(f"Monthly report for {month_str}:")
         for row in rows:
-            print(f"- {row['name']}: {row['total_minutes']} mins")
+            print(f"- {row['name']}: {format_playtime(row['total_minutes'])}")
         
         conn.close()
     except sqlite3.Error as e:
@@ -340,7 +365,7 @@ def report_top_time(db_path: str) -> None:
             
         print("Top 10 most played games by total time:")
         for row in rows:
-            print(f"- {row['name']}: {row['max_playtime']} mins")
+            print(f"- {row['name']}: {format_playtime(row['max_playtime'])}")
         
         conn.close()
     except sqlite3.Error as e:
