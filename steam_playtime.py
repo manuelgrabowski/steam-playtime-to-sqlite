@@ -297,33 +297,38 @@ def report_monthly(db_path: str, month_str: str) -> None:
         else:
             next_month = f"{year}-{month+1:02d}-01"
         
-        # Get all game sessions in the month, ordered by date
+        # Get monthly playtime by calculating the difference between the last session
+        # in the month and the last session before the month started
         cur.execute('''
-            WITH monthly_data AS (
-                SELECT 
-                    g.name, 
-                    s.appid,
-                    s.date,
-                    s.playtime_minutes,
-                    LAG(s.playtime_minutes) OVER (
-                        PARTITION BY s.appid
-                        ORDER BY s.date
-                    ) AS prev_playtime
+            WITH month_sessions AS (
+                -- Get all sessions within the target month
+                SELECT s.appid, g.name, s.date, s.playtime_minutes
                 FROM sessions s
                 JOIN games g ON s.appid = g.appid
                 WHERE s.date >= ? AND s.date < ?
-                ORDER BY s.date
+            ),
+            pre_month_baseline AS (
+                -- Get the last session before the month for each game
+                SELECT s.appid, MAX(s.playtime_minutes) as baseline_playtime
+                FROM sessions s
+                WHERE s.date < ?
+                GROUP BY s.appid
+            ),
+            month_end_playtime AS (
+                -- Get the last session in the month for each game
+                SELECT ms.appid, ms.name, MAX(ms.playtime_minutes) as end_playtime
+                FROM month_sessions ms
+                GROUP BY ms.appid
             )
             SELECT 
-                name, 
-                appid,
-                SUM(CASE WHEN prev_playtime IS NULL THEN playtime_minutes 
-                     ELSE MAX(0, playtime_minutes - prev_playtime) END) AS total_minutes
-            FROM monthly_data
-            GROUP BY appid
-            HAVING total_minutes > 0
-            ORDER BY total_minutes DESC
-        ''', (month_start, next_month))
+                mep.name,
+                mep.appid,
+                mep.end_playtime - COALESCE(pmb.baseline_playtime, 0) as monthly_playtime
+            FROM month_end_playtime mep
+            LEFT JOIN pre_month_baseline pmb ON mep.appid = pmb.appid
+            WHERE mep.end_playtime - COALESCE(pmb.baseline_playtime, 0) > 0
+            ORDER BY monthly_playtime DESC
+        ''', (month_start, next_month, month_start))
         
         rows = cur.fetchall()
         
@@ -333,7 +338,7 @@ def report_monthly(db_path: str, month_str: str) -> None:
             
         print(f"Monthly report for {month_str}:")
         for row in rows:
-            print(f"- {row['name']}: {format_playtime(row['total_minutes'])}")
+            print(f"- {row['name']}: {format_playtime(row['monthly_playtime'])}")
         
         conn.close()
     except sqlite3.Error as e:
